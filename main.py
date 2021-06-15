@@ -20,6 +20,22 @@ def getcity():
         z = z + s + '\n\n'
     return s
 
+def send_message(message):
+
+    try:
+        mgr = owm.weather_manager()
+        observation = mgr.weather_at_place(message.text)
+        weather = observation.weather
+        temp = weather.temperature("celsius")["temp"]
+        temp = round(temp, 1)
+
+        answer = "В городе " + message.text + " сейчас " + weather.detailed_status + "." + "\n"
+        answer += "Температура около: " + str(temp) + " С"
+
+    except Exception:
+        answer = "Не найден город или что-то пошло не так, попробуйте ввести название снова. Перейти к описанию => /help\n"
+    return answer
+
 
 @bot.message_handler(commands=["help"])
 def help_message(message):
@@ -33,35 +49,16 @@ def help_message(message):
 
 @bot.callback_query_handler(func=lambda a: True)
 def inline_a(a):
-    message = str(getcity())
-    mgr = owm.weather_manager()
-    observation = mgr.weather_at_place(message)
-    weather = observation.weather
-    temp = weather.temperature("celsius")["temp"]  # Присваиваем переменной значение температуры из таблицы
-    temp = round(temp, 1)
-
-    answer = "В городе " + message + " сейчас " + weather.detailed_status + "." + "\n"
-    answer += "Температура около: " + str(temp) + " С"
+    class message:
+        text = str(getcity())
+    answer = send_message(message)
     bot.send_message(a.message.chat.id, answer)
 
 
 @bot.message_handler(content_types=['text'])
-def send_message(message):
-    try:
-        mgr = owm.weather_manager()
-        observation = mgr.weather_at_place(message.text)
-        weather = observation.weather
-        temp = weather.temperature("celsius")["temp"]
-        temp = round(temp, 1)
-
-        answer = "В городе " + message.text.title() + " сейчас " + weather.detailed_status + "." + "\n"
-        answer += "Температура около: " + str(temp) + " С"
-
-    except Exception:
-        answer = "Не найден город, попробуйте ввести название снова. Перейти к описанию => /help\n"
-
+def send_message_1(message):
+    answer = send_message(message)
     bot.send_message(message.chat.id, answer)
-
 
 if __name__ == '__main__':
     bot.infinity_polling()
